@@ -37,6 +37,7 @@ exports.notice = (comment) => {
 
   const name = comment.get('nick')
   const text = comment.get('comment')
+  const objectId = comment.get('objectId')
   const url = process.env.SITE_URL + comment.get('url')
 
   if (!process.env.DISABLE_EMAIL) {
