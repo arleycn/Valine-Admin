@@ -96,6 +96,80 @@ ${text}
         console.error('微信提醒失败:', error.message)
       })
   }
+  if (process.env.SERVER_TURBO_KEY != null) {
+    const scContent = process.env.SERVER_TURBO_MD ? `
+#### ${name} 发表评论：
+
+${$.load(text.replace(/<img.*?src="(.*?)".*?>/g, "![图片]($1)").replace(/<br>/g, "\n")).text().replace(/\n+/g, "\n\n").replace(/\n+$/g, "")}
+
+#### [查看评论](${url + '#' + comment.get('objectId')})` : `
+${name} 发表评论：
+
+${$.load(text.replace(/<img.*?src="(.*?)".*?>/g, "\n图片: $1\n").replace(/<br>/g, "\n")).text().replace(/\n+/g, "\n\n").replace(/\n+$/g, "")}
+
+查看评论: ${url + '#' + comment.get('objectId')}`
+    axios({
+      method: 'post',
+      url: `https://sctapi.ftqq.com/${process.env.SERVER_TURBO_KEY}.send`,
+      data: `text=咚！「${process.env.SITE_NAME}」上有新评论了&desp=${scContent}`,
+      headers: {
+        'Content-type': 'application/x-www-form-urlencoded'
+      }
+    })
+      .then(function (response) {
+        if (response.status === 200 && response.data.code === 0) {
+          comment.set('isNotified', true)
+          comment.set('wechatNotified', true)
+          console.log('已通过Server酱提醒站长')
+        } else {
+          console.warn('Server酱提醒失败:', response.data)
+        }
+      })
+      .catch(function (error) {
+        console.error('Server酱提醒失败:', error.message)
+      })
+  }
+  if (process.env.QMSG_KEY != null) {
+    /*
+    if (process.env.QQ_SHAKE != null) {
+      axios.get(`https://qmsg.zendee.cn:443/send/${process.env.QMSG_KEY}?msg=${encodeURIComponent('[CQ:shake]')}`)
+        .then(function (response) {
+          if (response.status === 200 && response.data.success === true) {
+            console.log('已发送QQ戳一戳')
+          } else {
+            console.warn('发送QQ戳一戳失败:', response.data)
+          }
+        })
+        .catch(function (error) {
+          console.error('发送QQ戳一戳失败:', error.message)
+        })
+    }
+    */
+    const content = $.load(text.replace(/<img.*?src="(.*?)".*?>/g, "\n[图片]$1\n").replace(/<br>/g, "\n")).text().replace(/\n+/g, "\n").replace(/\n+$/g, "")
+    const scContent = `@face=119@您的 ${process.env.SITE_NAME} 上有新评论了！
+@face=183@${name} 发表评论：
+
+@face=77@@face=77@@face=77@@face=77@@face=77@
+${content}
+@face=76@@face=76@@face=76@@face=76@@face=76@
+
+@face=169@${url + '#' + comment.get('objectId')}`
+    axios.get(`https://qmsg.zendee.cn:443/send/${process.env.QMSG_KEY}?msg=${encodeURIComponent(scContent)}`)
+      .then(function (response) {
+        if (response.status === 200 && response.data.success === true) {
+          comment.set('isNotified', true)
+          comment.set('qqNotified', true)
+          console.log('已QQ提醒站长')
+        } else {
+          console.warn('QQ提醒失败:', response.data)
+        }
+      })
+      .catch(function (error) {
+        console.error('QQ提醒失败:', error.message)
+      })
+  }
+
+}
 
 // 发送邮件通知他人
 exports.send = (currentComment, parentComment) => {
