@@ -62,44 +62,6 @@ exports.notice = (comment) => {
         console.log("收到一条评论, 已提醒站长");
     });
 }
-
-    // 企业微信webhook通知
-exports.wechatnotice = (comment) => {
-
-    // 站长自己发的评论不需要通知
-    const name = comment.get('nick')
-    const text = comment.get('comment')
-    const url = process.env.SITE_URL + comment.get('url')
-
-  if (process.env.SERVER_KEY != null) {
-    const scContent = `
-#### ${name} 发表评论：
-
-${text}
-
-#### [\[查看评论\]](${url + '#' + comment.get('objectId')})`
-    axios({
-      method: 'post',
-      url: `${process.env.SERVER_KEY}.send`,
-      data: `text=咚！「${process.env.SITE_NAME}」上有新评论了&desp=${scContent}`,
-      headers: {
-        'Content-type': 'application/x-www-form-urlencoded'
-      }
-    })
-      .then(function (response) {
-        if (response.status === 200 && response.data.errmsg === 'success') {
-          comment.set('isNotified', true)
-          comment.set('wechatNotified', true)
-          console.log('已微信提醒站长')
-        } else {
-          console.warn('微信提醒失败:', response.data)
-        }
-      })
-      .catch(function (error) {
-        console.error('微信提醒失败:', error.message)
-      })
-  }
-
 // 发送邮件通知他人
 exports.send = (currentComment, parentComment)=> {
 
